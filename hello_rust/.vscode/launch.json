@@ -5,10 +5,18 @@
       "name": "Debug (Rust)",
       "type": "lldb",
       "request": "launch",
-      "cargo": { "args": ["build"] },
-      "program": "${cargo:program}",
+      "preLaunchTask": "cargo build",
       "cwd": "${workspaceFolder}",
-      "terminal": "integrated"
+      "terminal": "integrated",
+      "windows": {
+        "program": "${workspaceFolder}/target/debug/hello_rust.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/target/debug/hello_rust"
+      },
+      "osx": {
+        "program": "${workspaceFolder}/target/debug/hello_rust"
+      }
     }
   ]
 }
