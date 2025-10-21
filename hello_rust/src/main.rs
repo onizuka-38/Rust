@@ -1,7 +1,6 @@
-fn main() {
-    let name = "Rust";
-    println!("Hello, {}!", name);
-    
+mod lesson1;
 
+fn main() {
+    lesson1::run();
 }
 
