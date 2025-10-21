@@ -2,11 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug (Cargo auto)",
+      "name": "Debug (Rust)",
       "type": "lldb",
       "request": "launch",
-      "cargo": { "args": ["build"] },      // 먼저 빌드
-      "program": "${cargo:program}",       // 빌드 산출물 자동 탐지
+      "cargo": { "args": ["build"] },
+      "program": "${cargo:program}",
       "cwd": "${workspaceFolder}",
       "terminal": "integrated"
     }
