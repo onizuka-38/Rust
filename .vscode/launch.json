@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Rust Program",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/target/debug/${workspaceFolderBasename}.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "cargo": {
+        "args": ["run", "--quiet"],
+        "filter": { "name": "rust_playground", "kind": "bin" }
+      },
+      "terminal": "integrated"
+    }
+  ]
+}
