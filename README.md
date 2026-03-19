@@ -1,6 +1,6 @@
 # Rust
 
-Rust
+Rust-
 
 <div align="center">
   <img src="https://github-readme-stats.vercel.app/api?username=onizuka-38&cache_seconds=21600" height="180" />
