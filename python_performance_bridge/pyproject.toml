@@ -1,0 +1,24 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "python-performance-bridge"
+version = "0.1.0"
+description = "Rust-accelerated text preprocessing for Python ML pipelines"
+requires-python = ">=3.9"
+readme = "README.md"
+authors = [
+  { name = "Rust Bridge Team" }
+]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = []
+
+[tool.maturin]
+python-source = "python"
+module-name = "python_performance_bridge._core"
+features = ["pyo3/extension-module"]

@@ -9,10 +9,21 @@
 # Rust/Cargo local files
 **/.cargo/
 
+# Python virtualenv/cache/build
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.maturin/
+**/*.so
+**/*.pyd
+**/*.whl
+
 # Benchmark and generated datasets
 **/*.ndjson
 !fast_data_processor/examples/*.ndjson
 fast_data_processor/data/
+python_performance_bridge/benchmarks/profile_result.json
 
 # Editor/OS noise
 **/.DS_Store
