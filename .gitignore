@@ -24,6 +24,7 @@
 !fast_data_processor/examples/*.ndjson
 fast_data_processor/data/
 python_performance_bridge/benchmarks/profile_result.json
+legacy_c_ffi_bridge/benchmarks/ffi_overhead.json
 
 # Editor/OS noise
 **/.DS_Store

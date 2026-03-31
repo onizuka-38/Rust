@@ -1,0 +1,21 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "legacy-c-ffi-bridge"
+version = "0.1.0"
+description = "Safe Rust wrapper around legacy C matrix operations, exported to Python"
+requires-python = ">=3.9"
+readme = "README.md"
+authors = [{name = "Bridge Team"}]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: Implementation :: CPython"
+]
+
+[tool.maturin]
+python-source = "python"
+module-name = "legacy_c_ffi_bridge._core"
+features = ["pyo3/extension-module"]

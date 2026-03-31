@@ -1,0 +1,25 @@
+[package]
+name = "legacy_c_ffi_bridge"
+version = "0.1.0"
+edition = "2021"
+description = "Safe Rust wrapper over legacy C matrix routines with Python bridge"
+
+[lib]
+name = "legacy_c_ffi_bridge"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow = "1"
+pyo3 = { version = "0.21", features = ["extension-module", "abi3-py39"] }
+thiserror = "1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[build-dependencies]
+bindgen = "0.69"
+cc = "1"
+
+[[bench]]
+name = "wrapper_overhead"
+harness = false
