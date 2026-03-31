@@ -1,5 +1,17 @@
-.git/.env
-*/.env
+# Environment files
 .env
-*/.env
-langchain/.env
+*.env
+.git/.env
+
+# Rust build artifacts
+**/target/
+
+# Rust/Cargo local files
+**/.cargo/
+
+# Editor/OS noise
+**/.DS_Store
+**/Thumbs.db
+
+# Local app data
+budget_tracker/transactions.json
