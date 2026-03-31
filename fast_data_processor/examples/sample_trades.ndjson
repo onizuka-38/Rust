@@ -1,0 +1,4 @@
+{"ts":1700000000000,"exchange":"binance","symbol":"BTCUSDT","side":"buy","price":67123.10,"qty":0.0100}
+{"ts":1700000000100,"exchange":"binance","symbol":"ETHUSDT","side":"sell","price":3521.55,"qty":0.1500}
+{"ts":1700000000200,"exchange":"binance","symbol":"BTCUSDT","side":"sell","price":67124.00,"qty":0.0050}
+{"ts":1700000000300,"exchange":"binance","symbol":"SOLUSDT","side":"buy","price":153.22,"qty":8.5000}

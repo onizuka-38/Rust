@@ -9,6 +9,11 @@
 # Rust/Cargo local files
 **/.cargo/
 
+# Benchmark and generated datasets
+**/*.ndjson
+!fast_data_processor/examples/*.ndjson
+fast_data_processor/data/
+
 # Editor/OS noise
 **/.DS_Store
 **/Thumbs.db
