@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Realtime Whiteboard Client</title>
+  <style>
+    :root { --bg:#0d1117; --panel:#161b22; --line:#58a6ff; --text:#e6edf3; }
+    body { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--bg); color:var(--text); }
+    .top { display:flex; gap:8px; padding:10px; background:var(--panel); align-items:center; flex-wrap:wrap; }
+    input, button { padding:8px; border-radius:6px; border:1px solid #30363d; background:#0b1220; color:var(--text); }
+    button { cursor:pointer; }
+    #chat { height:150px; overflow:auto; border-top:1px solid #30363d; border-bottom:1px solid #30363d; padding:8px; background:#010409; }
+    #board { width:100%; height:calc(100vh - 270px); display:block; touch-action:none; background:#fff; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <input id="url" value="ws://127.0.0.1:9001" size="24" />
+    <input id="room" value="demo-room" size="10" />
+    <input id="name" value="user1" size="10" />
+    <button id="connect">Connect</button>
+    <button id="clear">Clear</button>
+    <input id="msg" placeholder="chat message" size="26" />
+    <button id="send">Send</button>
+  </div>
+  <div id="chat"></div>
+  <canvas id="board"></canvas>
+
+  <script>
+    const WHITEBOARD_DRAW = 0x01;
+    const WHITEBOARD_CLEAR = 0x02;
+    const SERVER_ENVELOPE = 0x7F;
+
+    const chatEl = document.getElementById('chat');
+    const board = document.getElementById('board');
+    const ctx = board.getContext('2d');
+
+    function resize() {
+      board.width = window.innerWidth;
+      board.height = Math.max(200, window.innerHeight - 270);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function log(msg) {
+      const row = document.createElement('div');
+      row.textContent = msg;
+      chatEl.appendChild(row);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function drawLine(x1, y1, x2, y2, color = '#222', width = 2) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function clearBoard() {
+      ctx.clearRect(0, 0, board.width, board.height);
+    }
+
+    let ws = null;
+    let drawing = false;
+    let prev = null;
+
+    function sendJson(payload) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify(payload));
+    }
+
+    function sendDrawPacket(x1, y1, x2, y2, rgba = 0x222222ff, width = 2) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const buf = new ArrayBuffer(1 + 4 * 5 + 4);
+      const dv = new DataView(buf);
+      let o = 0;
+      dv.setUint8(o, WHITEBOARD_DRAW); o += 1;
+      dv.setFloat32(o, x1, true); o += 4;
+      dv.setFloat32(o, y1, true); o += 4;
+      dv.setFloat32(o, x2, true); o += 4;
+      dv.setFloat32(o, y2, true); o += 4;
+      dv.setUint32(o, rgba, true); o += 4;
+      dv.setFloat32(o, width, true);
+      ws.send(buf);
+    }
+
+    function sendClearPacket() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(new Uint8Array([WHITEBOARD_CLEAR]));
+    }
+
+    function parseBroadcastBinary(buffer) {
+      const dv = new DataView(buffer);
+      if (dv.byteLength < 10) return;
+      const envelope = dv.getUint8(0);
+      if (envelope !== SERVER_ENVELOPE) return;
+
+      const opcode = dv.getUint8(9);
+      if (opcode === WHITEBOARD_CLEAR) {
+        clearBoard();
+        return;
+      }
+      if (opcode !== WHITEBOARD_DRAW || dv.byteLength < 1 + 8 + 1 + 4 * 5 + 4) {
+        return;
+      }
+
+      let o = 10;
+      const x1 = dv.getFloat32(o, true); o += 4;
+      const y1 = dv.getFloat32(o, true); o += 4;
+      const x2 = dv.getFloat32(o, true); o += 4;
+      const y2 = dv.getFloat32(o, true); o += 4;
+      const rgba = dv.getUint32(o, true); o += 4;
+      const w = dv.getFloat32(o, true);
+
+      const r = (rgba >>> 24) & 0xff;
+      const g = (rgba >>> 16) & 0xff;
+      const b = (rgba >>> 8) & 0xff;
+      const a = (rgba & 0xff) / 255;
+      drawLine(x1, y1, x2, y2, `rgba(${r}, ${g}, ${b}, ${a})`, w);
+    }
+
+    document.getElementById('connect').onclick = () => {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+
+      ws = new WebSocket(document.getElementById('url').value);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => {
+        log('connected');
+        sendJson({
+          type: 'join',
+          room: document.getElementById('room').value,
+          name: document.getElementById('name').value
+        });
+      };
+
+      ws.onmessage = (ev) => {
+        if (typeof ev.data === 'string') {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'chat') {
+            log(`[${msg.name}] ${msg.text}`);
+          } else {
+            log(JSON.stringify(msg));
+          }
+          return;
+        }
+        parseBroadcastBinary(ev.data);
+      };
+
+      ws.onclose = () => log('disconnected');
+      ws.onerror = () => log('socket error');
+    };
+
+    document.getElementById('send').onclick = () => {
+      const text = document.getElementById('msg').value;
+      sendJson({ type: 'chat', text });
+    };
+
+    document.getElementById('clear').onclick = () => {
+      sendClearPacket();
+    };
+
+    board.addEventListener('pointerdown', (e) => {
+      drawing = true;
+      prev = { x: e.offsetX, y: e.offsetY };
+    });
+
+    board.addEventListener('pointermove', (e) => {
+      if (!drawing || !prev) return;
+      const cur = { x: e.offsetX, y: e.offsetY };
+      sendDrawPacket(prev.x, prev.y, cur.x, cur.y);
+      prev = cur;
+    });
+
+    window.addEventListener('pointerup', () => {
+      drawing = false;
+      prev = null;
+    });
+  </script>
+</body>
+</html>
