@@ -1,0 +1,13 @@
+[package]
+name = "cyberpunk_tui_dashboard"
+version = "0.1.0"
+edition = "2021"
+description = "Cyberpunk-themed async TUI dashboard for server observability"
+
+[dependencies]
+anyhow = "1"
+crossterm = "0.28"
+nvml-wrapper = "0.10"
+ratatui = "0.28"
+sysinfo = "0.29"
+tokio = { version = "1", features = ["full"] }
