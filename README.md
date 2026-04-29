@@ -2,11 +2,6 @@
 
 Rust 학습과 실무형 실험을 모아 둔 프로젝트 묶음입니다. 루트는 Cargo workspace가 아니며, 각 하위 폴더가 독립적인 Cargo 프로젝트로 동작합니다.
 
-<div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=onizuka-38&cache_seconds=21600" height="180" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=onizuka-38&layout=compact&cache_seconds=21600" height="180" />
-</div>
-
 ## 프로젝트 목록
 
 | 폴더 | 설명 |
