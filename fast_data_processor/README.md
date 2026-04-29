@@ -1,63 +1,59 @@
 # Fast Data Processor
 
-´ë¿ë·® ·Î±×/NDJSON µ¥ÀÌÅÍ¸¦ ºü¸£°Ô Ã³¸®ÇÏ´Â Rust CLI µµ±¸ÀÔ´Ï´Ù.
+ë¡œê·¸ íŒŒì¼ ìŠ¤ìº”ê³¼ ê±°ë˜ì†Œ NDJSON í†µê³„ë¥¼ ì²˜ë¦¬í•˜ëŠ” Rust CLIì…ë‹ˆë‹¤. í° ì…ë ¥ì„ í•œ ë²ˆì— ë©”ëª¨ë¦¬ì— ì˜¬ë¦¬ì§€ ì•Šê³  ë°°ì¹˜ ë‹¨ìœ„ë¡œ ì½ê³ , í†µê³„ ì§‘ê³„ëŠ” `rayon`ìœ¼ë¡œ ë³‘ë ¬í™”í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 
-µµ¸ŞÀÎ Æ¯È­ Æ÷ÀÎÆ®:
-- °¡»óÈ­Æó °Å·¡¼Ò API ¼öÁı µ¥ÀÌÅÍ(ÇÑ ÁÙ JSON = NDJSON) ºĞ¼®
-- ½Éº¼º° Ã¼°á Åë°è(°Å·¡·®, Ã¼°á¼ö, VWAP, Notional) °è»ê
+## ì£¼ìš” ê¸°ëŠ¥
 
-## ÇÙ½É ±â¼ú
-- `clap`: ¼­ºêÄ¿¸Çµå ±â¹İ CLI
-- `serde`, `serde_json`: NDJSON Á÷·ÄÈ­/¿ªÁ÷·ÄÈ­
-- `regex`: ·Î±× ÇÊÅÍ¸µ
-- `rayon`: º´·Ä Áı°è ÃÖÀûÈ­
-- `criterion`: ¼º´É º¥Ä¡¸¶Å©
+- ì •ê·œì‹ ê¸°ë°˜ ë¡œê·¸/í…ìŠ¤íŠ¸ ìŠ¤ìº”
+- include/exclude í•„í„°ì™€ ëŒ€ì†Œë¬¸ì ë¬´ì‹œ ì˜µì…˜
+- ê±°ë˜ ì´ë²¤íŠ¸ NDJSON ì§‘ê³„
+- ì‹¬ë³¼ë³„ ì²´ê²° ìˆ˜, ë§¤ìˆ˜/ë§¤ë„ ìˆ˜, ì´ ìˆ˜ëŸ‰, Notional, VWAP, ìµœì €/ìµœê³ ê°€ ê³„ì‚°
+- ë²¤ì¹˜ë§ˆí¬ìš© ëŒ€ëŸ‰ ìƒ˜í”Œ ë°ì´í„° ìƒì„±
+- JSON ë˜ëŠ” í‘œ í˜•íƒœ ì¶œë ¥
 
-## ¸í·É¾î
-### 1) ·Î±×/ÅØ½ºÆ® ½ºÄµ
-```bash
-cargo run -- scan ./logs/app.log --include "error|timeout" --ignore-case
-cargo run -- scan ./logs/app.log ./logs/app2.log --include "BTCUSDT" --exclude "heartbeat" --count-only
+## ê¸°ìˆ  ìŠ¤íƒ
+
+- `clap`: CLI ì„œë¸Œì»¤ë§¨ë“œ
+- `serde`, `serde_json`: NDJSON íŒŒì‹±
+- `regex`: í…ìŠ¤íŠ¸ í•„í„°ë§
+- `rayon`: ë³‘ë ¬ ì§‘ê³„
+- `criterion`: ë²¤ì¹˜ë§ˆí¬
+
+## ëª…ë ¹ì–´
+
+ë¡œê·¸ ìŠ¤ìº”:
+
+```powershell
+cd fast_data_processor
+cargo run -- scan .\logs\app.log --include "error|timeout" --ignore-case
+cargo run -- scan .\logs\app.log .\logs\app2.log --include "BTCUSDT" --exclude "heartbeat" --count-only
 ```
 
-### 2) °Å·¡¼Ò NDJSON Åë°è
-```bash
+ê±°ë˜ NDJSON í†µê³„:
+
+```powershell
 cargo run -- crypto-stats --input examples/sample_trades.ndjson --mode serial
 cargo run -- crypto-stats --input examples/sample_trades.ndjson --mode parallel --batch-size 50000 --top 20
 cargo run -- crypto-stats --input data/trades.ndjson --mode parallel --json
 ```
 
-### 3) º¥Ä¡ ÀÔ·Â¿ë ´ë¿ë·® »ùÇÃ »ı¼º
-```bash
+ë²¤ì¹˜ ì…ë ¥ ìƒì„±:
+
+```powershell
 cargo run -- bench-input --output data/trades_1m.ndjson --lines 1000000 --symbols 6
 ```
 
-## º¥Ä¡¸¶Å©
-### ½ÇÇà
-```bash
-cargo bench --bench processing_bench
-```
+## ë²¤ì¹˜ë§ˆí¬
 
-### ÃøÁ¤ Ç×¸ñ
-- `serial`: ´ÜÀÏ ½º·¹µå ÆÄ½Ì/Áı°è
-- `parallel`: `rayon` ±â¹İ º´·Ä ÆÄ½Ì/Áı°è
-- µ¥ÀÌÅÍ Å©±â: 100,000 / 500,000 lines
-
-### ÀÚµ¿ ºñ±³ ½ºÅ©¸³Æ®(¿ä¾à ¼öÄ¡ Ãâ·Â)
 ```powershell
-./scripts/benchmark.ps1 -Input data/trades_1m.ndjson -BatchSize 50000
+cargo bench --bench processing_bench
+.\scripts\benchmark.ps1 -Input data/trades_1m.ndjson -BatchSize 50000
 ```
 
-### °á°ú ÅÛÇÃ¸´
-½ÇÁ¦ ÃøÁ¤ °á°ú¸¦ ¾Æ·¡ Ç¥¿¡ Ã¤¿ö ÆÀ¿¡ °øÀ¯ÇÏ¼¼¿ä.
+ì¸¡ì • ëŒ€ìƒì€ ë‹¨ì¼ ìŠ¤ë ˆë“œ ì§‘ê³„ì™€ `rayon` ê¸°ë°˜ ë³‘ë ¬ ì§‘ê³„ì…ë‹ˆë‹¤.
 
-| Dataset | Serial (ms) | Parallel (ms) | Speedup |
-|---|---:|---:|---:|
-| 100k lines | - | - | - |
-| 500k lines | - | - | - |
+## êµ¬í˜„ ë©”ëª¨
 
-## ±¸Çö Æ÷ÀÎÆ®
-- ÆÄÀÏ ÀüÃ¼¸¦ ¸Ş¸ğ¸®¿¡ ¿Ã¸®Áö ¾Ê°í **¹èÄ¡ ´ÜÀ§**·Î ÀĞ¾î Ã³¸®ÇÕ´Ï´Ù.
-- º´·Ä ¸ğµå¿¡¼­µµ ¹èÄ¡ ´ÜÀ§ Ã³¸® ÈÄ Áı°è °á°ú¸¸ ¸ÓÁöÇÏ¿© ¸Ş¸ğ¸® »ç¿ë·®À» Á¦¾îÇÕ´Ï´Ù.
-- ÆÄ½Ì ½ÇÆĞ ¶óÀÎÀº `invalid_lines`·Î Ä«¿îÆ®ÇØ µ¥ÀÌÅÍ Ç°ÁúÀ» ÇÔ²² È®ÀÎÇÕ´Ï´Ù.
-
+- ì˜ëª»ëœ JSON ë¼ì¸ì€ `invalid_lines`ë¡œ ì§‘ê³„í•©ë‹ˆë‹¤.
+- ë³‘ë ¬ ëª¨ë“œì—ì„œë„ ë°°ì¹˜ë³„ ê²°ê³¼ë§Œ í•©ì³ ë©”ëª¨ë¦¬ ì‚¬ìš©ëŸ‰ì„ ì œì–´í•©ë‹ˆë‹¤.
+- `SymbolStats::merge_from`ìœ¼ë¡œ partial resultë¥¼ ì•ˆì „í•˜ê²Œ ë³‘í•©í•©ë‹ˆë‹¤.

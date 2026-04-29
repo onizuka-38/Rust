@@ -1,22 +1,31 @@
 # Valgrind Memory Safety Report
 
-½ÇÇà ÀÏ½Ã:
-- 
+ë ˆê±°ì‹œ C FFI ê²½ë¡œì˜ ë©”ëª¨ë¦¬ ì•ˆì „ì„±ì„ Linux í™˜ê²½ì—ì„œ í™•ì¸í•˜ê¸° ìœ„í•œ ë³´ê³ ì„œ í…œí”Œë¦¿ì…ë‹ˆë‹¤.
 
-¸í·É:
+## ì‹¤í–‰ ì •ë³´
+
+- ì‹¤í–‰ ì¼ì‹œ:
+- ì‹¤í–‰ í™˜ê²½:
+
+## ëª…ë ¹
+
 ```bash
 valgrind --leak-check=full --show-leak-kinds=all \
   python -c "import legacy_c_ffi_bridge as b; print(b.matmul(2,2,[1,2,3,4],2,2,[1,0,0,1]))"
 ```
 
-¿ä¾à:
-- definitely lost: 
-- indirectly lost: 
-- possibly lost: 
-- still reachable: 
-- invalid read/write: 
+## ìš”ì•½
 
-°á·Ğ:
-- [ ] ´©¼ö ¾øÀ½
-- [ ] invalid memory access ¾øÀ½
-- [ ] ¼öÁ¤ ÇÊ¿ä
+| í•­ëª© | ê²°ê³¼ |
+|---|---:|
+| definitely lost | - |
+| indirectly lost | - |
+| possibly lost | - |
+| still reachable | - |
+| invalid read/write | - |
+
+## ê²°ë¡ 
+
+- [ ] ëˆ„ìˆ˜ ì—†ìŒ
+- [ ] invalid memory access ì—†ìŒ
+- [ ] ìˆ˜ì • í•„ìš”

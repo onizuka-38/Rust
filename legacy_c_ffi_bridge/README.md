@@ -1,76 +1,75 @@
-# Legacy C FFI Bridge (C -> Rust Safe -> Python)
+# Legacy C FFI Bridge
 
-±âÁ¸ ·¹°Å½Ã C ¿¬»ê ÄÚµå¸¦ RustÀÇ ¾ÈÀü API·Î °¨½Î°í, ÃÖÁ¾ÀûÀ¸·Î PyO3·Î Python ÆĞÅ°ÁöÈ­ÇÑ ÇÁ·ÎÁ§Æ®ÀÔ´Ï´Ù.
+í¬ì¸í„°ì™€ ìˆ˜ë™ ë©”ëª¨ë¦¬ ê´€ë¦¬ë¥¼ ì‚¬ìš©í•˜ëŠ” ë ˆê±°ì‹œ C í–‰ë ¬ ì—°ì‚° ì½”ë“œë¥¼ Rust safe APIë¡œ ê°ì‹¸ê³ , PyO3ë¡œ Python íŒ¨í‚¤ì§€ê¹Œì§€ ë…¸ì¶œí•˜ëŠ” ì˜ˆì œì…ë‹ˆë‹¤.
 
-## ¶óÀÌºê·¯¸® ¼±Á¤
-- ´ë»ó: BLAS °è¿­ C API ½ºÅ¸ÀÏÀÇ ·¹°Å½Ã Çà·Ä ¿¬»ê ·çÆ¾ (`c_legacy/legacy_math.c`)
-- ¼º°İ: Æ÷ÀÎÅÍ/¼öµ¿ ¸Ş¸ğ¸® °ü¸® Áß½ÉÀÇ ºÒ¾ÈÀü C API (OpenBLAS/À¯»ç C ¼öÄ¡ ¶óÀÌºê·¯¸® »ç¿ë ÆĞÅÏÀ» ÀçÇö)
-- ¸ñÀû: unsafe FFI ¿µ¿ªÀ» Rust safe Ãß»óÈ­·Î °İ¸®
+## ëª©í‘œ
 
-## ±â¼ú ½ºÅÃ
-- `bindgen`: C Çì´õ(`legacy_math.h`)·ÎºÎÅÍ Rust ¹ÙÀÎµù ÀÚµ¿ »ı¼º
-- `cc`: C ¼Ò½º ÄÄÆÄÀÏ ¹× Rust ¸µÅ©
-- `PyO3` + `maturin`: Python ³×ÀÌÆ¼ºê È®Àå ¹èÆ÷
+- C FFIì˜ `unsafe` ì˜ì—­ì„ ì‘ì€ ëª¨ë“ˆì— ê²©ë¦¬
+- Rust `Context`ì™€ `Matrix` íƒ€ì…ì´ C ë¦¬ì†ŒìŠ¤ ìˆ˜ëª… ê´€ë¦¬
+- shape ê²€ì¦ì„ Rust ìª½ì—ì„œ ë¨¼ì € ìˆ˜í–‰í•´ Cë‹¨ ì˜¤ë¥˜ ê°€ëŠ¥ì„± ì¶•ì†Œ
+- C ì—ëŸ¬ì½”ë“œë¥¼ Rust `Result`ì™€ Python ì˜ˆì™¸ë¡œ ë³€í™˜
 
-## ±¸Á¶
-- `c_legacy/`: ±âÁ¸ C ÄÚµå
-- `build.rs`: `cc` ÄÄÆÄÀÏ + `bindgen` »ı¼º
-- `src/ffi.rs`: »ı¼ºµÈ unsafe ¹ÙÀÎµù include
-- `src/safe.rs`: ¾ÈÀü ·¡ÆÛ(Context/Matrix)
-- `src/lib.rs`: Python¿¡ ³ëÃâÇÒ API
+## êµ¬ì¡°
 
-## Safe API ¼³°è Æ÷ÀÎÆ®
-- `Context`/`Matrix`°¡ raw pointer¸¦ ¼ÒÀ¯ÇÏ°í Drop¿¡¼­ ¾ÈÀü ÇØÁ¦
-- shape °ËÁõ(Çà·Ä Â÷¿ø) ¼±°Ë»ç·Î C´Ü segfault °¡´É¼º Â÷´Ü
-- C ¿¡·¯ÄÚµå + `lm_last_error`¸¦ Rust `Result`·Î º¯È¯
-- `to_vec()`¿¡¼­ ±æÀÌ °ËÁõ ÈÄ ¾ÈÀü º¹»ç
+- `c_legacy/legacy_math.c`: ë ˆê±°ì‹œ C í–‰ë ¬ ì—°ì‚° êµ¬í˜„
+- `c_legacy/legacy_math.h`: C API í—¤ë”
+- `build.rs`: `cc`ë¡œ C ì½”ë“œë¥¼ ì»´íŒŒì¼í•˜ê³  `bindgen` ë°”ì¸ë”© ìƒì„±
+- `src/ffi.rs`: ìƒì„±ëœ C ë°”ì¸ë”© include
+- `src/safe.rs`: safe Rust ë˜í¼
+- `src/lib.rs`: PyO3 í•¨ìˆ˜ì™€ Rust ë²¤ì¹˜ìš© í•¨ìˆ˜
+- `benches/wrapper_overhead.rs`: ë˜í¼ ì˜¤ë²„í—¤ë“œ ë²¤ì¹˜ë§ˆí¬
 
-## ¼³Ä¡ (Python)
-```bash
+## ì œê³µ API
+
+Pythonì— ë…¸ì¶œë˜ëŠ” ì£¼ìš” í•¨ìˆ˜:
+
+- `matmul(...)`
+- `affine_sigmoid(...)`
+- `rust_only_matmul(...)`
+- `ping(iterations)`
+
+## ì„¤ì¹˜
+
+Python 3.9 ì´ìƒ, `maturin`, C ì»´íŒŒì¼ëŸ¬, `bindgen` ì‹¤í–‰ í™˜ê²½ì´ í•„ìš”í•©ë‹ˆë‹¤.
+
+```powershell
 cd legacy_c_ffi_bridge
 python -m pip install -U pip maturin
 python -m pip install -e .
 ```
 
-## »ç¿ë ¿¹½Ã
+## ì‚¬ìš© ì˜ˆì‹œ
+
 ```python
 import legacy_c_ffi_bridge as bridge
 
-# 2x3 ¡¤ 3x2
 out = bridge.matmul(
-    2, 3, [1,2,3,4,5,6],
-    3, 2, [1,2,3,4,5,6]
+    2, 3, [1, 2, 3, 4, 5, 6],
+    3, 2, [1, 2, 3, 4, 5, 6],
 )
 print(out)
 
-# affine + sigmoid
 y = bridge.affine_sigmoid(
     1, 3, [0.1, 0.2, 0.3],
-    3, 2, [0.5,0.1, 0.2,0.3, 0.4,0.7],
-    1, 2, [0.01, -0.02]
+    3, 2, [0.5, 0.1, 0.2, 0.3, 0.4, 0.7],
+    1, 2, [0.01, -0.02],
 )
 print(y)
 ```
 
-## ¿À¹öÇìµå ÃøÁ¤
-```bash
+## ê²€ì¦
+
+```powershell
+cargo check
+cargo bench --bench wrapper_overhead
 python benchmarks/measure_overhead.py --size 128 --repeat 5 --out benchmarks/ffi_overhead.json
 python benchmarks/generate_overhead_report.py
 ```
 
-## Valgrind ¸Ş¸ğ¸® ¾ÈÀü¼º °ËÁõ
-Linux È¯°æ¿¡¼­:
+Linuxì—ì„œ ë©”ëª¨ë¦¬ ì•ˆì „ì„±ì„ ë” í™•ì¸í•˜ë ¤ë©´ Valgrindë¥¼ ì‚¬ìš©í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+
 ```bash
 cargo build --release
 valgrind --leak-check=full --show-leak-kinds=all \
   python -c "import legacy_c_ffi_bridge as b; print(b.matmul(2,2,[1,2,3,4],2,2,[1,0,0,1]))"
 ```
-
-°ËÁõ ¸®Æ÷Æ® ÅÛÇÃ¸´:
-- `benchmarks/VALGRIND_REPORT.md`
-
-## Rust ¸¶ÀÌÅ©·Îº¥Ä¡
-```bash
-cargo bench --bench wrapper_overhead
-```
-

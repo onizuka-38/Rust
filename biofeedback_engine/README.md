@@ -1,48 +1,57 @@
-# Biofeedback Engine (EEG/EMG)
+# Biofeedback Engine
 
-EEG/EMG µî °í»ùÇÃ¸µ(1000Hz+) »ıÃ¼ ½Ã°è¿­À» ÆÄ½Ì/ºĞ¼®ÇÏ´Â °í¼Ó ÄÚ¾î ¿£ÁøÀÔ´Ï´Ù.
+EEG/EMG ê°™ì€ ê³ ìƒ˜í”Œë§ ìƒì²´ ì‹œê³„ì—´ì„ íŒŒì‹±í•˜ê³  ë¶„ì„í•˜ëŠ” Rust ì½”ì–´ ì—”ì§„ì…ë‹ˆë‹¤. EDF í—¤ë”/ìƒ˜í”Œ íŒŒì‹±, ì‹¤ì‹œê°„ ìŠ¤íŠ¸ë¦¼ ì‹œë®¬ë ˆì´ì…˜, FFT ê¸°ë°˜ ì£¼íŒŒìˆ˜ ëŒ€ì—­ ë¶„ì„ì„ í¬í•¨í•©ë‹ˆë‹¤.
 
-## ÇÙ½É ±â¼ú
-- `nom`: EDF(European Data Format) ¹ÙÀÌ³Ê¸® Çì´õ/ÆäÀÌ·Îµå ÆÄ½Ì
-- `tokio`: ºñµ¿±â ´ÙÃ¤³Î ½ºÆ®¸² ÆÄÀÌÇÁ¶óÀÎ
-- `rustfft`: ½Ç½Ã°£ FFT ±â¹İ ÁÖÆÄ¼ö ´ë¿ª ºĞ¼®
+## ê¸°ëŠ¥
 
-## ±¸Çö ¹üÀ§
-- EDF ÆÄ¼­: Çì´õ + ½ÅÈ£ »ùÇÃ(16-bit) ÆÄ½Ì
-- ½Ç½Ã°£ ÆÄÀÌÇÁ¶óÀÎ: 1000Hz+ ´ÙÃ¤³Î ½ºÆ®¸² ½Ã¹Ä·¹ÀÌ¼Ç ¼ö½Å
-- ½ÅÈ£ Ã³¸®:
-  - artifact Á¦°Å: amplitude clipping + DC offset Á¦°Å
-  - FFT band power: delta/theta/alpha/beta/gamma
+- EDF(European Data Format) í—¤ë”ì™€ 16-bit ìƒ˜í”Œ íŒŒì‹±
+- ì±„ë„ë³„ ìƒ˜í”Œ chunk ì²˜ë¦¬
+- artifact clipping
+- DC offset ì œê±°
+- RMS ê³„ì‚°
+- FFT band power ê³„ì‚°: delta, theta, alpha, beta, gamma
+- `tokio::mpsc` ê¸°ë°˜ ì‹¤ì‹œê°„ ì²˜ë¦¬ íŒŒì´í”„ë¼ì¸ ì‹œë®¬ë ˆì´ì…˜
 
-## ¸í·É¾î
-### EDF ÆÄ½Ì
-```bash
-cargo run -- parse-edf --input ./examples/sample.edf --max-records 10 --json
+## ê¸°ìˆ  ìŠ¤íƒ
+
+- `nom`: ë°”ì´ë„ˆë¦¬/ASCII í•„ë“œ íŒŒì‹±
+- `tokio`: ë¹„ë™ê¸° íŒŒì´í”„ë¼ì¸
+- `rustfft`: FFT ê³„ì‚°
+- `serde`, `serde_json`: ê²°ê³¼ ë¦¬í¬íŠ¸ ì¶œë ¥
+- `criterion`: ì§€ì—° ì‹œê°„ ë²¤ì¹˜ë§ˆí¬
+
+## ëª…ë ¹ì–´
+
+EDF íŒŒì‹±:
+
+```powershell
+cd biofeedback_engine
+cargo run -- parse-edf --input .\examples\sample.edf --max-records 10 --json
 ```
 
-### ½Ç½Ã°£ Ã³¸® ½Ã¹Ä·¹ÀÌ¼Ç
-```bash
+ì‹¤ì‹œê°„ ì²˜ë¦¬ ì‹œë®¬ë ˆì´ì…˜:
+
+```powershell
 cargo run -- realtime-sim --channels 8 --sample-rate 1024 --chunk-size 256 --seconds 5
 ```
 
-Ãâ·Â ÁöÇ¥:
+ì¶œë ¥ ì§€í‘œ:
+
 - `processed_chunks`
 - `end_to_end_elapsed_ms`
 - `avg_fft_stage_latency_ms`
 
-## º¥Ä¡¸¶Å©
-```bash
-cargo bench --bench pipeline_latency
-```
+## ë²¤ì¹˜ë§ˆí¬ì™€ í”„ë¡œíŒŒì¼ë§
 
-## C++ ·¹°Å½Ã ºñ±³ ÇÁ·ÎÆÄÀÏ¸µ
-```bash
+```powershell
+cargo bench --bench pipeline_latency
 python scripts/profile_vs_legacy.py --project-root . --channels 8 --sample-rate 1024 --chunk-size 256 --seconds 5 --legacy-cpp-ms 1200 --out benchmarks/profiling_report.json
 ```
 
-`benchmarks/PROFILE_REPORT.md`¿¡ °á°ú¸¦ ¹İ¿µÇØ ºñ±³ º¸°í¼­·Î »ç¿ëÇÏ¼¼¿ä.
+`benchmarks/PROFILE_REPORT.md`ëŠ” ë¹„êµ ê²°ê³¼ë¥¼ ì •ë¦¬í•˜ëŠ” ë³´ê³ ì„œ í…œí”Œë¦¿ì…ë‹ˆë‹¤.
 
-## ÀÇ·á µ¥ÀÌÅÍ ¾ÈÀü¼º °üÁ¡
-- ÆÄ¼­ ´Ü°è¿¡¼­ ±æÀÌ/°æ°è °ËÁõÀ» ¼±ÇàÇÏ¿© malformed payload Á¢±Ù Â÷´Ü
-- processing ´Ü°è¿¡¼­ Ã¤³Îº° °íÁ¤ chunk ´ÜÀ§ Ã³¸®·Î ¸Ş¸ğ¸® ÆøÁÖ ¹æÁö
-- Rust Å¸ÀÔ ½Ã½ºÅÛ ±â¹İÀ¸·Î ÆÄ¼­/ºĞ¼®±â »çÀÌ unsafe ¾ø´Â °æ·Î À¯Áö
+## ì•ˆì „ì„± ë©”ëª¨
+
+- EDF íŒŒì¼ ê¸¸ì´ê°€ ì„ ì–¸ëœ í—¤ë”ë³´ë‹¤ ì§§ìœ¼ë©´ ì¦‰ì‹œ ì˜¤ë¥˜ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
+- ìƒ˜í”Œ ì½ê¸° ì¤‘ EOFê°€ ë°œìƒí•˜ë©´ malformed payloadë¡œ ì²˜ë¦¬í•©ë‹ˆë‹¤.
+- ë¶„ì„ íŒŒì´í”„ë¼ì¸ì€ safe Rust ê²½ë¡œë¡œ êµ¬ì„±ë˜ì–´ ìˆìŠµë‹ˆë‹¤.
