@@ -1,5 +1,6 @@
 # Rust Projects
 
+<<<<<<< HEAD
 Rust 학습과 실무형 실험을 모아 둔 프로젝트 묶음입니다. 루트는 Cargo workspace가 아니며, 각 하위 폴더가 독립적인 Cargo 프로젝트로 동작합니다.
 
 ## 프로젝트 목록
@@ -37,3 +38,11 @@ cargo bench
 - PyO3 프로젝트는 Python 3.9 이상과 `maturin`이 필요합니다.
 - `legacy_c_ffi_bridge`는 C 빌드 도구와 `bindgen` 실행 환경이 필요합니다.
 - 현재 폴더는 독립 프로젝트 모음이므로 루트에서 `cargo check --workspace`를 실행하는 구조가 아닙니다.
+=======
+Rust-
+
+<div align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=onizuka-38&cache_seconds=21600" height="180" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=onizuka-38&layout=compact&cache_seconds=21600" height="180" />
+</div>
+>>>>>>> 8cca6ebfbfc06320041a9599d706976e3f5eb5f4
