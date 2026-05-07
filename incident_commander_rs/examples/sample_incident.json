@@ -1,0 +1,57 @@
+{
+  "title": "checkout error rate spike after payment-service deploy",
+  "alerts": [
+    {
+      "service": "checkout-api",
+      "severity": "page",
+      "message": "5xx error rate exceeded 8% for 10 minutes",
+      "ts": "2026-05-07T10:14:00Z"
+    }
+  ],
+  "deployments": [
+    {
+      "service": "payment-service",
+      "version": "2026.05.07-rc3",
+      "actor": "deploy-bot",
+      "ts": "2026-05-07T10:02:00Z",
+      "commit": "a13f09c"
+    },
+    {
+      "service": "checkout-api",
+      "version": "2026.05.07-rc1",
+      "actor": "deploy-bot",
+      "ts": "2026-05-07T09:41:00Z",
+      "commit": "91ad77e"
+    }
+  ],
+  "logs": [
+    {
+      "service": "checkout-api",
+      "level": "error",
+      "message": "payment authorization failed: upstream timeout",
+      "ts": "2026-05-07T10:12:01Z",
+      "trace_id": "trc-1001"
+    },
+    {
+      "service": "checkout-api",
+      "level": "error",
+      "message": "POST /checkout returned 502 after payment-service timeout",
+      "ts": "2026-05-07T10:12:03Z",
+      "trace_id": "trc-1002"
+    },
+    {
+      "service": "payment-service",
+      "level": "warn",
+      "message": "connection pool saturation: available=0 pending=128",
+      "ts": "2026-05-07T10:12:04Z",
+      "trace_id": "trc-1002"
+    },
+    {
+      "service": "payment-service",
+      "level": "error",
+      "message": "database acquire timeout after 1500ms",
+      "ts": "2026-05-07T10:12:05Z",
+      "trace_id": "trc-1003"
+    }
+  ]
+}
