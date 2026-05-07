@@ -9,7 +9,7 @@ services:
       - "--llm-base-url"
       - "http://ollama:11434"
       - "--llm-model"
-      - "llama3.1"
+      - "qwen3.6:35b"
     ports:
       - "8088:8088"
     depends_on:

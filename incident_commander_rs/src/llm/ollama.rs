@@ -21,27 +21,47 @@ impl OllamaClient {
 }
 
 #[derive(Serialize)]
-struct OllamaGenerateRequest<'a> {
+struct OllamaChatRequest<'a> {
     model: &'a str,
-    prompt: &'a str,
+    messages: Vec<OllamaMessage<'a>>,
     stream: bool,
 }
 
+#[derive(Serialize)]
+struct OllamaMessage<'a> {
+    role: &'a str,
+    content: &'a str,
+}
+
 #[derive(Deserialize)]
-struct OllamaGenerateResponse {
-    response: String,
+struct OllamaChatResponse {
+    message: OllamaResponseMessage,
+}
+
+#[derive(Deserialize)]
+struct OllamaResponseMessage {
+    content: String,
 }
 
 #[async_trait]
 impl LlmClient for OllamaClient {
     async fn generate(&self, request: GenerateRequest) -> Result<GenerateResponse> {
-        let url = format!("{}/api/generate", self.base_url);
+        let url = format!("{}/api/chat", self.base_url);
         let response = self
             .http
             .post(url)
-            .json(&OllamaGenerateRequest {
+            .json(&OllamaChatRequest {
                 model: &self.model,
-                prompt: &request.prompt,
+                messages: vec![
+                    OllamaMessage {
+                        role: "system",
+                        content: "You are a careful internal SRE incident analyst.",
+                    },
+                    OllamaMessage {
+                        role: "user",
+                        content: &request.prompt,
+                    },
+                ],
                 stream: false,
             })
             .send()
@@ -49,12 +69,12 @@ impl LlmClient for OllamaClient {
             .context("failed to call Ollama")?
             .error_for_status()
             .context("Ollama returned non-success status")?
-            .json::<OllamaGenerateResponse>()
+            .json::<OllamaChatResponse>()
             .await
             .context("failed to parse Ollama response")?;
 
         Ok(GenerateResponse {
-            text: response.response,
+            text: response.message.content,
         })
     }
 }

@@ -5,7 +5,7 @@ Rust로 작성한 기업형 AI 장애 분석 서비스입니다. 알림, 배포 
 이 프로젝트는 민감한 운영 로그를 외부 SaaS LLM으로 보내기 어려운 회사를 가정합니다. 그래서 로컬/사내 추론 백엔드를 교체 가능한 구조로 지원합니다.
 
 - `mock`: 로컬 개발과 CI를 위한 deterministic 응답
-- `ollama`: 로컬 모델 서버의 `/api/generate` 사용
+- `ollama`: 로컬 모델 서버의 `/api/chat` 사용
 - `openai-compatible`: vLLM, LocalAI, LiteLLM 등 `/v1/chat/completions` 호환 endpoint 사용
 
 ## 포트폴리오 포인트
@@ -30,7 +30,7 @@ Client / Ops Tool
   -> Detection Engine
   -> LLM Provider Trait
        -> Mock
-       -> Ollama /api/generate
+       -> Ollama /api/chat
        -> vLLM OpenAI-compatible /v1/chat/completions
   -> Incident Report
 ```
@@ -56,11 +56,14 @@ Invoke-RestMethod `
 
 ## Ollama로 실행
 
+기본 Ollama 모델은 `qwen3.6:35b`입니다. Ollama 라이브러리 기준으로 약 36B급 Qwen3.6 모델이며, 기본 태그는 Q4_K_M 양자화로 약 24GB 크기입니다. 로컬에서 실행하려면 충분한 메모리/GPU 메모리가 필요합니다.
+
 ```powershell
+ollama pull qwen3.6:35b
 cargo run -- `
   --provider ollama `
   --llm-base-url http://localhost:11434 `
-  --llm-model llama3.1
+  --llm-model qwen3.6:35b
 ```
 
 ## vLLM / OpenAI-Compatible Endpoint로 실행

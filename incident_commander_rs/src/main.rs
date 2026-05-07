@@ -24,7 +24,7 @@ struct Cli {
     #[arg(long, env = "LLM_BASE_URL", default_value = "http://localhost:11434")]
     llm_base_url: String,
 
-    #[arg(long, env = "LLM_MODEL", default_value = "llama3.1")]
+    #[arg(long, env = "LLM_MODEL", default_value = "qwen3.6:35b")]
     llm_model: String,
 
     #[arg(long, env = "LLM_API_KEY")]
