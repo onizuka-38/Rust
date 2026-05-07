@@ -1,6 +1,7 @@
 use crate::llm::{GenerateRequest, LlmClient};
 use crate::model::{
-    DetectionSummary, IncidentInput, IncidentReport, IncidentSeverity, RunbookMatch, TimelineEntry,
+    DeploymentCorrelation, DeploymentEvent, DetectionSummary, EvidenceSignal, IncidentInput,
+    IncidentReport, IncidentSeverity, RollbackAdvice, RunbookMatch, ServiceImpact, TimelineEntry,
 };
 use crate::report::render_markdown;
 use anyhow::Result;
@@ -60,19 +61,35 @@ fn detect(input: &IncidentInput) -> DetectionSummary {
     let timeline = build_timeline(input);
 
     let affected_services = ordered_affected_services(by_service_errors, affected);
+    let service_impacts = build_service_impacts(input);
+    let deployment_correlations = correlate_deployments(input, &suspected_deployments);
+    let evidence_signals = collect_evidence_signals(input);
     let runbook_matches = match_runbooks(input);
+    let confidence_score = confidence_score(
+        input,
+        error_logs,
+        suspected_deployments.len(),
+        deployment_correlations.len(),
+        runbook_matches.len(),
+    );
+    let rollback_advice = rollback_advice(risk_score, &deployment_correlations);
 
     DetectionSummary {
         severity,
         risk_score,
+        confidence_score,
         total_logs: input.logs.len(),
         error_logs,
         warn_logs,
         affected_services,
+        service_impacts,
         suspected_deployments,
+        deployment_correlations,
         representative_errors,
         timeline,
+        evidence_signals,
         runbook_matches,
+        rollback_advice,
     }
 }
 
@@ -97,8 +114,13 @@ Detected metrics:
 - warn_logs: {warn_logs}
 - severity: {severity:?}
 - risk_score: {risk_score}/100
+- confidence_score: {confidence_score}/100
 - affected_services: {affected_services:?}
+- service_impacts: {service_impacts}
+- deployment_correlations: {deployment_correlations}
+- evidence_signals: {evidence_signals}
 - runbook_matches: {runbook_matches}
+- rollback_advice: {rollback_advice}
 
 Alerts:
 {alerts}
@@ -115,9 +137,18 @@ Representative errors:
         warn_logs = detection.warn_logs,
         severity = detection.severity,
         risk_score = detection.risk_score,
+        confidence_score = detection.confidence_score,
         affected_services = &detection.affected_services,
+        service_impacts = serde_json::to_string_pretty(&detection.service_impacts)
+            .unwrap_or_else(|_| "[]".to_string()),
+        deployment_correlations = serde_json::to_string_pretty(&detection.deployment_correlations)
+            .unwrap_or_else(|_| "[]".to_string()),
+        evidence_signals = serde_json::to_string_pretty(&detection.evidence_signals)
+            .unwrap_or_else(|_| "[]".to_string()),
         runbook_matches = serde_json::to_string_pretty(&detection.runbook_matches)
             .unwrap_or_else(|_| "[]".to_string()),
+        rollback_advice = serde_json::to_string_pretty(&detection.rollback_advice)
+            .unwrap_or_else(|_| "{}".to_string()),
     )
 }
 
@@ -217,6 +248,127 @@ fn build_timeline(input: &IncidentInput) -> Vec<TimelineEntry> {
     timeline
 }
 
+fn build_service_impacts(input: &IncidentInput) -> Vec<ServiceImpact> {
+    let mut impacts: BTreeMap<String, ServiceImpact> = BTreeMap::new();
+
+    for alert in &input.alerts {
+        let entry = impacts.entry(alert.service.clone()).or_insert_with(|| ServiceImpact {
+            service: alert.service.clone(),
+            error_logs: 0,
+            warn_logs: 0,
+            alert_count: 0,
+            sample_trace_ids: Vec::new(),
+        });
+        entry.alert_count += 1;
+    }
+
+    for log in &input.logs {
+        let entry = impacts.entry(log.service.clone()).or_insert_with(|| ServiceImpact {
+            service: log.service.clone(),
+            error_logs: 0,
+            warn_logs: 0,
+            alert_count: 0,
+            sample_trace_ids: Vec::new(),
+        });
+
+        let level = log.level.to_ascii_lowercase();
+        if level == "error" || level == "fatal" {
+            entry.error_logs += 1;
+        } else if level == "warn" || level == "warning" {
+            entry.warn_logs += 1;
+        }
+
+        if let Some(trace_id) = &log.trace_id {
+            if entry.sample_trace_ids.len() < 3 && !entry.sample_trace_ids.contains(trace_id) {
+                entry.sample_trace_ids.push(trace_id.clone());
+            }
+        }
+    }
+
+    let mut out = impacts.into_values().collect::<Vec<_>>();
+    out.sort_by(|a, b| {
+        b.error_logs
+            .cmp(&a.error_logs)
+            .then_with(|| b.alert_count.cmp(&a.alert_count))
+            .then_with(|| a.service.cmp(&b.service))
+    });
+    out
+}
+
+fn correlate_deployments(
+    input: &IncidentInput,
+    suspected_deployments: &[DeploymentEvent],
+) -> Vec<DeploymentCorrelation> {
+    suspected_deployments
+        .iter()
+        .map(|deployment| {
+            let first_error_ts = input
+                .logs
+                .iter()
+                .filter(|log| {
+                    log.service == deployment.service
+                        && matches!(log.level.to_ascii_lowercase().as_str(), "error" | "fatal")
+                })
+                .map(|log| log.ts.clone())
+                .min();
+
+            let correlation = match &first_error_ts {
+                Some(first_error_ts) if first_error_ts >= &deployment.ts => "after_deploy",
+                Some(_) => "before_deploy",
+                None => "no_direct_error",
+            }
+            .to_string();
+
+            let reason = match correlation.as_str() {
+                "after_deploy" => "first service error appears at or after the deployment timestamp",
+                "before_deploy" => "service already had errors before this deployment timestamp",
+                _ => "service is affected, but no direct error log was found for this deployment",
+            }
+            .to_string();
+
+            DeploymentCorrelation {
+                service: deployment.service.clone(),
+                version: deployment.version.clone(),
+                commit: deployment.commit.clone(),
+                deployment_ts: deployment.ts.clone(),
+                first_error_ts,
+                correlation,
+                reason,
+            }
+        })
+        .collect()
+}
+
+fn collect_evidence_signals(input: &IncidentInput) -> Vec<EvidenceSignal> {
+    let mut signals = Vec::new();
+
+    for alert in &input.alerts {
+        signals.push(EvidenceSignal {
+            signal_type: "alert".to_string(),
+            service: Some(alert.service.clone()),
+            severity: alert.severity.clone(),
+            summary: alert.message.clone(),
+        });
+    }
+
+    for log in input.logs.iter().filter(|log| {
+        matches!(
+            log.level.to_ascii_lowercase().as_str(),
+            "error" | "fatal" | "warn" | "warning"
+        )
+    }) {
+        signals.push(EvidenceSignal {
+            signal_type: "log".to_string(),
+            service: Some(log.service.clone()),
+            severity: log.level.clone(),
+            summary: log.message.clone(),
+        });
+    }
+
+    signals.truncate(12);
+    signals
+}
+
 fn ordered_affected_services(
     by_service_errors: BTreeMap<String, usize>,
     affected: BTreeSet<String>,
@@ -280,6 +432,47 @@ fn match_runbooks(input: &IncidentInput) -> Vec<RunbookMatch> {
     matches
 }
 
+fn confidence_score(
+    input: &IncidentInput,
+    error_logs: usize,
+    suspected_deployments: usize,
+    deployment_correlations: usize,
+    runbook_matches: usize,
+) -> u8 {
+    let mut score = 20u16;
+    score += input.alerts.len().min(3) as u16 * 10;
+    score += error_logs.min(5) as u16 * 8;
+    score += suspected_deployments.min(2) as u16 * 10;
+    score += deployment_correlations.min(2) as u16 * 8;
+    score += runbook_matches.min(3) as u16 * 6;
+    score.min(100) as u8
+}
+
+fn rollback_advice(risk_score: u8, correlations: &[DeploymentCorrelation]) -> RollbackAdvice {
+    let targets = correlations
+        .iter()
+        .filter(|correlation| correlation.correlation == "after_deploy")
+        .map(|correlation| correlation.service.clone())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+
+    let should_prepare_rollback = risk_score >= 70 && !targets.is_empty();
+    let reason = if should_prepare_rollback {
+        "high risk score with post-deployment error correlation".to_string()
+    } else if targets.is_empty() {
+        "no clear post-deployment error correlation was found".to_string()
+    } else {
+        "risk score is below rollback preparation threshold".to_string()
+    };
+
+    RollbackAdvice {
+        should_prepare_rollback,
+        target_services: targets,
+        reason,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -315,7 +508,9 @@ mod tests {
 
         assert_eq!(detection.error_logs, 1);
         assert_eq!(detection.suspected_deployments.len(), 1);
+        assert_eq!(detection.service_impacts[0].service, "checkout-api");
         assert!(detection.risk_score >= 50);
+        assert!(detection.confidence_score >= 50);
         assert!(matches!(
             detection.severity,
             IncidentSeverity::High | IncidentSeverity::Critical
@@ -325,6 +520,10 @@ mod tests {
             .runbook_matches
             .iter()
             .any(|runbook| runbook.id == "rb-upstream-timeout"));
+        assert!(detection
+            .deployment_correlations
+            .iter()
+            .any(|correlation| correlation.correlation == "after_deploy"));
     }
 
     #[test]

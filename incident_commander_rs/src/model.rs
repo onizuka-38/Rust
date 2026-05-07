@@ -102,17 +102,57 @@ pub struct RunbookMatch {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct ServiceImpact {
+    pub service: String,
+    pub error_logs: usize,
+    pub warn_logs: usize,
+    pub alert_count: usize,
+    pub sample_trace_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EvidenceSignal {
+    pub signal_type: String,
+    pub service: Option<String>,
+    pub severity: String,
+    pub summary: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct DeploymentCorrelation {
+    pub service: String,
+    pub version: String,
+    pub commit: Option<String>,
+    pub deployment_ts: String,
+    pub first_error_ts: Option<String>,
+    pub correlation: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RollbackAdvice {
+    pub should_prepare_rollback: bool,
+    pub target_services: Vec<String>,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct DetectionSummary {
     pub severity: IncidentSeverity,
     pub risk_score: u8,
+    pub confidence_score: u8,
     pub total_logs: usize,
     pub error_logs: usize,
     pub warn_logs: usize,
     pub affected_services: Vec<String>,
+    pub service_impacts: Vec<ServiceImpact>,
     pub suspected_deployments: Vec<DeploymentEvent>,
+    pub deployment_correlations: Vec<DeploymentCorrelation>,
     pub representative_errors: Vec<LogEvent>,
     pub timeline: Vec<TimelineEntry>,
+    pub evidence_signals: Vec<EvidenceSignal>,
     pub runbook_matches: Vec<RunbookMatch>,
+    pub rollback_advice: RollbackAdvice,
 }
 
 #[derive(Debug, Clone, Serialize)]

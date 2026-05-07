@@ -15,8 +15,12 @@ Rust로 작성한 기업형 AI 장애 분석 서비스입니다. 알림, 배포 
 - incident alert, 서비스 로그, 배포 이벤트 수집
 - 영향 서비스와 대표 에러 탐지
 - deterministic severity와 risk score 계산
+- confidence score와 주요 evidence signal 계산
+- 서비스별 impact summary 생성
+- 배포와 첫 에러 시점의 correlation 분석
 - alert, deployment, log를 합친 timeline 생성
 - 로그/알림 증거 기반 runbook 후보 매칭
+- rollback 준비 여부와 대상 서비스 제안
 - 최근 배포와 에러 증가 징후 대조
 - root-cause hypothesis와 next action 생성
 - Markdown incident report 생성
@@ -110,8 +114,13 @@ cargo run -- --provider openai-compatible
 - `detection`: Rust 규칙 기반 탐지 요약
 - `detection.severity`: `low`, `medium`, `high`, `critical`
 - `detection.risk_score`: 0부터 100까지의 deterministic score
+- `detection.confidence_score`: 입력 증거의 충분성을 반영한 confidence score
+- `detection.service_impacts`: 서비스별 error/warning/alert/trace 요약
+- `detection.deployment_correlations`: 배포 시점과 첫 에러 시점의 correlation 결과
 - `detection.timeline`: alert, deployment, log를 합친 timeline
+- `detection.evidence_signals`: LLM에 전달되는 주요 판단 근거
 - `detection.runbook_matches`: 로그와 알림에서 매칭된 deterministic runbook 후보
+- `detection.rollback_advice`: rollback 준비 여부, 대상 서비스, 이유
 - `ai_summary`: LLM이 생성한 분석
 - `recommended_actions`: deterministic 대응 액션 힌트
 - `markdown`: 완성된 incident report 본문
@@ -159,7 +168,9 @@ Docker 이미지 빌드까지 포함:
 - 기업형 AI 추론 백엔드를 위한 provider abstraction
 - CI와 오프라인 데모를 위한 mock LLM
 - Ollama와 vLLM/OpenAI-compatible client
-- deterministic validation, severity scoring, timeline extraction
+- deterministic validation, severity scoring, confidence scoring, timeline extraction
+- service impact summary와 deployment correlation 분석
 - LLM 생성 전 deterministic runbook matching
+- rollback readiness 판단
 - 민감 로그를 외부 API로 보내지 않는 사내 배포 친화 구조
 - SRE incident response 도메인에 맞춘 prompt 설계

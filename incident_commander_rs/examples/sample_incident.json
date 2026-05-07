@@ -28,7 +28,7 @@
     {
       "service": "checkout-api",
       "level": "error",
-      "message": "payment authorization failed: upstream timeout",
+      "message": "payment authorization failed: upstream timeout latency_p95_ms=2400 error_rate=8.2%",
       "ts": "2026-05-07T10:12:01Z",
       "trace_id": "trc-1001"
     },
@@ -42,7 +42,7 @@
     {
       "service": "payment-service",
       "level": "warn",
-      "message": "connection pool saturation: available=0 pending=128",
+      "message": "connection pool saturation: available=0 pending=128 saturation=97%",
       "ts": "2026-05-07T10:12:04Z",
       "trace_id": "trc-1002"
     },
