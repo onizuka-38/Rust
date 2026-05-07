@@ -1,0 +1,26 @@
+services:
+  incident-commander:
+    build: .
+    command:
+      - "--provider"
+      - "ollama"
+      - "--listen"
+      - "0.0.0.0:8088"
+      - "--llm-base-url"
+      - "http://ollama:11434"
+      - "--llm-model"
+      - "llama3.1"
+    ports:
+      - "8088:8088"
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  ollama-data:
